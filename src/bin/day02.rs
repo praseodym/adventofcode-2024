@@ -1,3 +1,4 @@
+/// https://adventofcode.com/2024/day/2
 fn main() {
     let (part1_answer, part2_answer) = run(include_str!("../../input/day02/input"));
     println!("part 1 answer: {}", part1_answer);
