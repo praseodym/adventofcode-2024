@@ -1,12 +1,12 @@
+use adventofcode_2024::{grid, print_answers};
+
 /// https://adventofcode.com/2024/day/6
 fn main() {
-    let (part1_answer, part2_answer) = run(include_str!("../../input/day06/input"));
-    println!("part 1 answer: {}", part1_answer);
-    println!("part 2 answer: {}", part2_answer);
+    print_answers(run(include_str!("../../input/day06/input")));
 }
 
 fn run(input: &'static str) -> (u32, u32) {
-    let (grid, len) = parse_char_grid(input);
+    let (grid, len) = grid::parse_char_grid(input);
 
     let start = grid.iter().position(|&c| c == b'^').unwrap();
     let start = (start % len, start / len);
@@ -68,18 +68,6 @@ fn patrol(
             visited_dir[pos.1 * len + pos.0] = dir;
         }
     }
-}
-
-fn parse_char_grid(input: &str) -> (Vec<u8>, usize) {
-    let len = input.lines().next().unwrap().len();
-    assert_eq!(len, input.lines().count(), "input must be square");
-    let mut grid = vec![b' '; len * len];
-    input.lines().enumerate().for_each(|(y, line)| {
-        line.bytes().enumerate().for_each(|(x, c)| {
-            grid[y * len + x] = c;
-        });
-    });
-    (grid, len)
 }
 
 #[cfg(test)]

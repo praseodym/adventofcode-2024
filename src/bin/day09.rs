@@ -1,10 +1,9 @@
+use adventofcode_2024::print_answers;
 use std::collections::VecDeque;
 
 /// https://adventofcode.com/2024/day/9
 fn main() {
-    let (part1_answer, part2_answer) = run(include_str!("../../input/day09/input"));
-    println!("part 1 answer: {}", part1_answer);
-    println!("part 2 answer: {}", part2_answer);
+    print_answers(run(include_str!("../../input/day09/input")));
 }
 
 #[derive(Clone, Debug)]

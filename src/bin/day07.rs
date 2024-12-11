@@ -1,8 +1,8 @@
+use adventofcode_2024::print_answers;
+
 /// https://adventofcode.com/2024/day/7
 fn main() {
-    let (part1_answer, part2_answer) = run(include_str!("../../input/day07/input"));
-    println!("part 1 answer: {}", part1_answer);
-    println!("part 2 answer: {}", part2_answer);
+    print_answers(run(include_str!("../../input/day07/input")));
 }
 
 fn run(input: &'static str) -> (u64, u64) {
