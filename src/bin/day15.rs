@@ -1,20 +1,16 @@
 use adventofcode_2024::grid::Grid;
-use adventofcode_2024::point::{Point, LEFT, RIGHT};
-use adventofcode_2024::print_answers;
+use adventofcode_2024::point::{Point, DOWN, LEFT, RIGHT, UP};
 use std::collections::VecDeque;
 
 /// https://adventofcode.com/2024/day/15
+/// The Game
 fn main() {
-    print_answers(run(include_str!("../../input/day15/input")));
+    run(include_str!("../../input/day15/input"));
 }
 
-fn run(input: &'static str) -> (u32, u32) {
+fn run(input: &'static str) {
     let input = input.split_once("\n\n").unwrap();
     let grid_input = input.0;
-    let commands = input.1.replace("\n", "").bytes().collect::<Vec<u8>>();
-    let grid = Grid::parse_square(grid_input);
-
-    let part1_answer = simulate(grid, &commands);
 
     let mut expanded_grid = grid_input.to_string();
     expanded_grid = expanded_grid.replace("#", "##");
@@ -23,16 +19,27 @@ fn run(input: &'static str) -> (u32, u32) {
     expanded_grid = expanded_grid.replace("@", "@.");
 
     let grid = Grid::parse_nonsquare(&expanded_grid);
-    let part2_answer = simulate(grid, &commands);
-
-    (part1_answer, part2_answer)
+    simulate(grid);
 }
 
-fn simulate(mut grid: Grid<u8>, commands: &[u8]) -> u32 {
+fn simulate(mut grid: Grid<u8>) {
     let mut robot = grid.position(|c| *c == b'@').unwrap();
 
-    for c in commands {
-        let dir = Point::from_ascii(*c);
+    console::Term::stdout().clear_screen().unwrap();
+
+    loop {
+        console::Term::stdout().move_cursor_to(0, 0).unwrap();
+        print_grid(&grid.data, (grid.width, grid.height));
+
+        let c = console::Term::stdout().read_char().unwrap();
+
+        let dir = match c {
+            'w' => UP,
+            'a' => LEFT,
+            's' => DOWN,
+            'd' => RIGHT,
+            _ => continue,
+        };
         let new = robot + dir;
         if !grid.contains(new) {
             continue;
@@ -62,14 +69,15 @@ fn simulate(mut grid: Grid<u8>, commands: &[u8]) -> u32 {
         grid[new] = b'@';
         robot = new;
     }
+}
 
-    grid.data
-        .iter()
-        .enumerate()
-        .filter(|(_, &c)| c == b'O' || c == b'[')
-        .map(|(i, _)| grid.point_from_index(i))
-        .map(|p| 100 * p.y as u32 + p.x as u32)
-        .sum::<u32>()
+fn print_grid(grid: &[u8], (width, height): (usize, usize)) {
+    for y in 0..height {
+        for x in 0..width {
+            print!("{}", grid[y * width + x] as char);
+        }
+        println!();
+    }
 }
 
 fn push_boxes_part1(grid: &mut Grid<u8>, pos: Point, dir: Point) -> bool {
@@ -113,34 +121,4 @@ fn push_boxes_part2(grid: &mut Grid<u8>, pos: Point, dir: Point) -> bool {
         grid[p + RIGHT] = b']';
     }
     true
-}
-
-#[cfg(test)]
-mod day15_tests {
-    use super::*;
-
-    #[test]
-    fn input() {
-        let (part1_answer, part2_answer) = run(include_str!("../../input/day15/input"));
-        assert_eq!(part1_answer, 1451928);
-        assert_eq!(part2_answer, 1462788);
-    }
-
-    #[test]
-    fn example1() {
-        let (part1_answer, _) = run(include_str!("../../input/day15/example1"));
-        assert_eq!(part1_answer, 2028);
-    }
-
-    #[test]
-    fn example2() {
-        let (part1_answer, part2_answer) = run(include_str!("../../input/day15/example2"));
-        assert_eq!(part1_answer, 10092);
-        assert_eq!(part2_answer, 9021);
-    }
-
-    #[test]
-    fn example3() {
-        run(include_str!("../../input/day15/example3"));
-    }
 }
