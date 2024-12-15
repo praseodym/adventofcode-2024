@@ -1,4 +1,5 @@
-use adventofcode_2024::grid::parse_char_grid_nonsquare;
+use adventofcode_2024::grid::Grid;
+use adventofcode_2024::point::{Point, LEFT, RIGHT};
 use adventofcode_2024::print_answers;
 use std::collections::VecDeque;
 
@@ -11,9 +12,9 @@ fn run(input: &'static str) -> (u32, u32) {
     let input = input.split_once("\n\n").unwrap();
     let grid_input = input.0;
     let commands = input.1.replace("\n", "").bytes().collect::<Vec<u8>>();
+    let grid = Grid::parse_square(grid_input);
 
-    let (grid, grid_dim) = parse_char_grid_nonsquare(grid_input);
-    let part1_answer = simulate(grid, &commands, grid_dim);
+    let part1_answer = simulate(grid, &commands);
 
     let mut expanded_grid = grid_input.to_string();
     expanded_grid = expanded_grid.replace("#", "##");
@@ -21,133 +22,96 @@ fn run(input: &'static str) -> (u32, u32) {
     expanded_grid = expanded_grid.replace(".", "..");
     expanded_grid = expanded_grid.replace("@", "@.");
 
-    let (grid, grid_dim) = parse_char_grid_nonsquare(&expanded_grid);
-    let part2_answer = simulate(grid, &commands, grid_dim);
+    let grid = Grid::parse_nonsquare(&expanded_grid);
+    let part2_answer = simulate(grid, &commands);
 
     (part1_answer, part2_answer)
 }
 
-fn simulate(mut grid: Vec<u8>, commands: &[u8], (width, height): (usize, usize)) -> u32 {
-    let mut robot = grid
-        .iter()
-        .enumerate()
-        .position(|(_, &c)| c == b'@')
-        .map(|i| (i % width, i / width))
-        .unwrap();
+fn simulate(mut grid: Grid<u8>, commands: &[u8]) -> u32 {
+    let mut robot = grid.position(|c| *c == b'@').unwrap();
 
     for c in commands {
-        let (x, y) = robot;
-        let (dx, dy) = match c {
-            b'^' => (0, -1),
-            b'v' => (0, 1),
-            b'<' => (-1, 0),
-            b'>' => (1, 0),
-            _ => unreachable!(),
-        };
-        let (nx, ny) = (x as i32 + dx, y as i32 + dy);
-        if nx < 0 || ny < 0 || nx >= width as i32 || ny >= height as i32 {
+        let dir = Point::from_ascii(*c);
+        let new = robot + dir;
+        if !grid.contains(new) {
             continue;
         }
-        let nc = grid[ny as usize * width + nx as usize];
+        let nc = grid[new];
         match nc {
             b'#' => continue,
             b'O' => {
-                if !push_boxes_part1(&mut grid, width, height, nx, ny, dx, dy) {
+                if !push_boxes_part1(&mut grid, new, dir) {
                     continue;
                 }
             }
             b'[' => {
-                if !push_boxes_part2(&mut grid, width, height, nx, ny, dx, dy) {
+                if !push_boxes_part2(&mut grid, new, dir) {
                     continue;
                 }
             }
             b']' => {
-                if !push_boxes_part2(&mut grid, width, height, nx - 1, ny, dx, dy) {
+                if !push_boxes_part2(&mut grid, new + LEFT, dir) {
                     continue;
                 }
             }
             b'.' => {}
             _ => unreachable!(),
         }
-        grid[y * width + x] = b'.';
-        grid[ny as usize * width + nx as usize] = b'@';
-        robot = (nx as usize, ny as usize);
+        grid[robot] = b'.';
+        grid[new] = b'@';
+        robot = new;
     }
 
-    grid.iter()
+    grid.data
+        .iter()
         .enumerate()
         .filter(|(_, &c)| c == b'O' || c == b'[')
-        .map(|(i, _)| 100 * (i / width) as u32 + (i % width) as u32)
+        .map(|(i, _)| grid.point_from_index(i))
+        .map(|p| 100 * p.y as u32 + p.x as u32)
         .sum::<u32>()
 }
 
-fn push_boxes_part1(
-    grid: &mut [u8],
-    width: usize,
-    height: usize,
-    x: i32,
-    y: i32,
-    dx: i32,
-    dy: i32,
-) -> bool {
-    assert_eq!(grid[y as usize * width + x as usize], b'O');
-    let (bx, by) = (x + dx, y + dy);
-    if bx < 0 || by < 0 || bx >= width as i32 || by >= height as i32 {
-        return false;
+fn push_boxes_part1(grid: &mut Grid<u8>, pos: Point, dir: Point) -> bool {
+    assert_eq!(grid[pos], b'O');
+    let b = pos + dir;
+    if !grid.contains(b) || grid[b] == b'#' || (grid[b] == b'O' && !push_boxes_part1(grid, b, dir))
+    {
+        false
+    } else {
+        grid[b] = b'.';
+        grid[b] = b'O';
+        true
     }
-    let bc = grid[by as usize * width + bx as usize];
-    if bc == b'#' {
-        return false;
-    }
-    if bc == b'O' && !push_boxes_part1(grid, width, height, bx, by, dx, dy) {
-        return false;
-    }
-    grid[y as usize * width + x as usize] = b'.';
-    grid[by as usize * width + bx as usize] = b'O';
-    true
 }
 
-fn push_boxes_part2(
-    grid: &mut [u8],
-    width: usize,
-    height: usize,
-    x: i32,
-    y: i32,
-    dx: i32,
-    dy: i32,
-) -> bool {
+fn push_boxes_part2(grid: &mut Grid<u8>, pos: Point, dir: Point) -> bool {
     let mut to_move = Vec::new();
     let mut to_check = VecDeque::new();
-    to_check.push_back((x, y));
-    while let Some((x, y)) = to_check.pop_front() {
-        if to_move.contains(&(x, y)) {
+    to_check.push_back(pos);
+    while let Some(pos) = to_check.pop_front() {
+        if to_move.contains(&pos) {
             continue;
         }
-        for (bx, by) in [(x + dx, y + dy), (x + dx + 1, y + dy)] {
-            if bx < 0 || by < 0 || bx >= width as i32 || by >= height as i32 {
+        for &p in [pos + dir, pos + dir + RIGHT].iter() {
+            if !grid.contains(p) || grid[p] == b'#' {
                 return false;
             }
-            let bc = grid[by as usize * width + bx as usize];
-            if bc == b'#' {
-                return false;
-            }
-            if bc == b'[' {
-                to_check.push_back((bx, by));
-            } else if bc == b']' {
-                to_check.push_back((bx - 1, by));
+            if grid[p] == b'[' {
+                to_check.push_back(p);
+            } else if grid[p] == b']' {
+                to_check.push_back(p + LEFT);
             }
         }
-        to_move.push((x, y));
+        to_move.push(pos);
     }
-
-    while let Some((x, y)) = to_move.pop() {
-        let (bx, by) = (x + dx, y + dy);
-        grid[y as usize * width + x as usize] = b'.';
-        grid[y as usize * width + x as usize + 1] = b'.';
-        grid[by as usize * width + bx as usize] = b'[';
-        grid[by as usize * width + bx as usize + 1] = b']';
+    while let Some(pos) = to_move.pop() {
+        grid[pos] = b'.';
+        grid[pos + RIGHT] = b'.';
+        let p = pos + dir;
+        grid[p] = b'[';
+        grid[p + RIGHT] = b']';
     }
-
     true
 }
 

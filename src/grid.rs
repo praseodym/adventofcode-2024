@@ -1,19 +1,84 @@
+use crate::point::Point;
+use std::ops::{Index, IndexMut};
+
 pub fn parse_char_grid(input: &str) -> (Vec<u8>, usize) {
-    let len = input.lines().next().unwrap().len();
-    assert_eq!(len, input.lines().count(), "input must be square");
-    let mut grid = Vec::with_capacity(len * len);
-    input.lines().for_each(|line| {
-        grid.extend_from_slice(line.as_bytes());
-    });
-    (grid, len)
+    let grid = Grid::parse_square(input);
+    (grid.data, grid.width)
 }
 
-pub fn parse_char_grid_nonsquare(input: &str) -> (Vec<u8>, (usize, usize)) {
-    let width = input.lines().next().unwrap().len();
-    let height = input.lines().count();
-    let mut grid = Vec::with_capacity(width * height);
-    input.lines().for_each(|line| {
-        grid.extend_from_slice(line.as_bytes());
-    });
-    (grid, (width, height))
+pub struct Grid<T> {
+    pub data: Vec<T>,
+    pub width: usize,
+    pub height: usize,
+}
+
+impl<T> Grid<T> {
+    pub fn point_from_index(&self, index: usize) -> Point {
+        Point {
+            x: (index % self.width) as i32,
+            y: (index / self.width) as i32,
+        }
+    }
+
+    pub fn contains(&self, point: Point) -> bool {
+        point.x >= 0
+            && (point.x as usize) < self.width
+            && point.y >= 0
+            && (point.y as usize) < self.height
+    }
+
+    pub fn position<P>(&self, predicate: P) -> Option<Point>
+    where
+        P: FnMut(&T) -> bool,
+    {
+        self.data
+            .iter()
+            .position(predicate)
+            .map(|i| self.point_from_index(i))
+    }
+}
+
+impl Grid<u8> {
+    pub fn parse_nonsquare(input: &str) -> Self {
+        let width = input.lines().next().unwrap().len();
+        let height = input.lines().count();
+        let mut data = Vec::with_capacity(width * height);
+        input.lines().for_each(|line| {
+            data.extend_from_slice(line.as_bytes());
+        });
+        Self {
+            data,
+            width,
+            height,
+        }
+    }
+
+    pub fn parse_square(input: &str) -> Self {
+        let grid = Self::parse_nonsquare(input);
+        assert_eq!(grid.width, grid.height, "input must be square");
+        grid
+    }
+
+    pub fn print(&self) {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                print!("{}", self.data[y * self.height + x] as char);
+            }
+            println!();
+        }
+    }
+}
+
+impl<T> Index<Point> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, index: Point) -> &Self::Output {
+        &self.data[index.y as usize * self.width + index.x as usize]
+    }
+}
+
+impl<T> IndexMut<Point> for Grid<T> {
+    fn index_mut(&mut self, index: Point) -> &mut Self::Output {
+        &mut self.data[index.y as usize * self.width + index.x as usize]
+    }
 }
