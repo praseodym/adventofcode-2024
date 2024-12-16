@@ -8,8 +8,9 @@ pub const UP: Point = NORTH;
 pub const DOWN: Point = SOUTH;
 pub const LEFT: Point = WEST;
 pub const RIGHT: Point = EAST;
+pub const NESW: [Point; 4] = [NORTH, EAST, SOUTH, WEST];
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
@@ -28,6 +29,14 @@ impl Point {
             b'>' => EAST,
             _ => unreachable!(),
         }
+    }
+
+    pub const fn rotate_90deg_cw(self) -> Point {
+        Point::new(-self.y, self.x)
+    }
+
+    pub const fn rotate_90deg_ccw(self) -> Point {
+        Point::new(self.y, -self.x)
     }
 }
 
