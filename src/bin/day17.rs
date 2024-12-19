@@ -1,5 +1,6 @@
 use adventofcode_2024::print_answers;
 
+/// https://adventofcode.com/2024/day/17
 fn main() {
     print_answers(run(include_str!("../../input/day17/input")));
 }

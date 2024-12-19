@@ -4,6 +4,7 @@ use adventofcode_2024::print_answers;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashSet};
 
+/// https://adventofcode.com/2024/day/16
 fn main() {
     print_answers(run(include_str!("../../input/day16/input")));
 }
