@@ -12,7 +12,15 @@ pub struct Grid<T> {
     pub height: usize,
 }
 
-impl<T> Grid<T> {
+impl<T: std::clone::Clone> Grid<T> {
+    pub fn new(default: T, width: usize, height: usize) -> Self {
+        Self {
+            data: vec![default; width * height],
+            width,
+            height,
+        }
+    }
+
     pub fn point_from_index(&self, index: usize) -> Point {
         Point {
             x: (index % self.width) as i32,
@@ -63,6 +71,24 @@ impl Grid<u8> {
         for y in 0..self.height {
             for x in 0..self.width {
                 print!("{}", self.data[y * self.height + x] as char);
+            }
+            println!();
+        }
+    }
+}
+
+impl Grid<bool> {
+    pub fn print(&self) {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                print!(
+                    "{}",
+                    if self.data[y * self.height + x] {
+                        '#'
+                    } else {
+                        '.'
+                    }
+                );
             }
             println!();
         }

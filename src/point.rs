@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign};
 
+pub const ORIGIN: Point = Point::new(0, 0);
 pub const NORTH: Point = Point::new(0, -1);
 pub const SOUTH: Point = Point::new(0, 1);
 pub const WEST: Point = Point::new(-1, 0);
@@ -10,7 +11,7 @@ pub const LEFT: Point = WEST;
 pub const RIGHT: Point = EAST;
 pub const NESW: [Point; 4] = [NORTH, EAST, SOUTH, WEST];
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
