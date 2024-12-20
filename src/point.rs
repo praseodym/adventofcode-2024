@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Add, AddAssign};
 
 pub const ORIGIN: Point = Point::new(0, 0);
@@ -39,6 +40,10 @@ impl Point {
     pub const fn rotate_90deg_ccw(self) -> Point {
         Point::new(self.y, -self.x)
     }
+
+    pub fn distance(self, other: Self) -> usize {
+        ((self.x - other.x).abs() + (self.y - other.y).abs()) as usize
+    }
 }
 
 impl Add for Point {
@@ -56,5 +61,11 @@ impl AddAssign for Point {
     fn add_assign(&mut self, other: Self) {
         self.x += other.x;
         self.y += other.y;
+    }
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
     }
 }
