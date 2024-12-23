@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+pub mod graph;
 pub mod grid;
 pub mod point;
 
