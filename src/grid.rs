@@ -70,7 +70,7 @@ impl Grid<u8> {
     pub fn print(&self) {
         for y in 0..self.height {
             for x in 0..self.width {
-                print!("{}", self.data[y * self.height + x] as char);
+                print!("{}", self.data[y * self.width + x] as char);
             }
             println!();
         }
